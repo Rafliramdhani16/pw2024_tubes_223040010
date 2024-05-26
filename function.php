@@ -1,5 +1,5 @@
-<?php 
 
+<?php 
 function koneksi()
 {
   return mysqli_connect('localhost', 'root', '', 'pw_2023_223040010');
@@ -106,6 +106,237 @@ if(query("SELECT * FROM user WHERE username = '$username'")){
             (NULL, '$gambar', '$username', '$email', '$password_baru', '$role'  )
           ";
   mysqli_query($conn, $query) or die(mysqli_error($conn));
+  return mysqli_affected_rows($conn);
+}
+
+function tambah($data)
+{
+  $conn = koneksi();
+
+  
+  $judul = htmlspecialchars($data['judul']);
+  $kategori = htmlspecialchars($data['kategori']);
+  $waktu = htmlspecialchars($data['waktu']);
+  $isi = htmlspecialchars($data['isi']);
+  
+// upload gambar
+$gambar = upload();
+if(!$gambar){
+  return false;
+}
+  $query = "INSERT INTO
+              detail
+            VALUES
+            (NULL, '$gambar', '$judul',  '$waktu', '$isi', '$kategori');
+          ";
+  mysqli_query($conn, $query);
+  echo mysqli_error($conn);
+  return mysqli_affected_rows($conn);
+}
+function upload(){
+  $namaFile = $_FILES['gambar']['name'];
+  $ukuranfile = $_FILES['gambar']['size'];
+  $error = $_FILES['gambar'] ['error'];
+  $tmpName = $_FILES['gambar']['tmp_name'];
+  // cek apakah gambar tidak di upload
+  if($error === 4){
+    echo "<script>
+    alert('pilih gambar terlebih dahulu!');
+    </script>";
+    return false;
+  }
+  // memastikan yang di upload hanya gambar
+  $ekstensiGambarValid = ['jpg', 'jpeg', 'png', 'webp'];
+  $ekstensiGambar = explode('.', $namaFile);
+  $ekstensiGambar = strtolower(end($ekstensiGambar));
+  // kiri true kanan false
+  if(!in_array($ekstensiGambar, $ekstensiGambarValid)){
+    echo "<script>
+    alert('yang anda upload bukan gambar');
+    </script>";
+    return false;
+  }
+  // cek jika ukuran terlalu besar
+    if($ukuranfile > 2000000 ){
+      echo "<script>
+      alert('ukuran gambar terlalu besar');
+      </script>";
+      return false;
+    }
+    // lolos pengecekan, gambar siap di upload
+    // generate nama gambar baru
+    $namaFileBaru = uniqid();
+    $namaFileBaru .= '.';
+    $namaFileBaru .=$ekstensiGambar;
+
+// .= adalah ditempel dan dirangkai dengan .
+
+    move_uploaded_file($tmpName, 'img/'. $namaFileBaru);
+    return $namaFile;
+
+}
+
+
+function delete($id)
+{
+  $conn = koneksi();
+  mysqli_query($conn, "DELETE FROM detail WHERE id= $id") or die (mysqli_error($conn));
+  return mysqli_affected_rows($conn);
+}
+
+
+function cari($keyword, $kategori) {
+  $conn = koneksi();
+  $query = "SELECT * FROM detail NATURAL JOIN kategori
+            WHERE judul LIKE '%$keyword%' OR
+            kategori LIKE '%$keyword%' OR
+            waktu LIKE '%$keyword%' OR
+            id_kategori LIKE '%$kategori%'";
+
+  $result = mysqli_query($conn, $query);
+  $rows = [];
+  while ($row = mysqli_fetch_assoc($result)) {
+    $rows[] = $row;
+  }
+  return $rows;
+}
+
+
+function edit($data)
+{
+  $conn = koneksi();
+  
+  $id = $data['id'];
+  
+  // cek apakah user pilih gambar baru atau tidak
+
+  $judul = htmlspecialchars($data['judul']);
+  $kategori = ($data['kategori']);
+  $waktu = htmlspecialchars($data['waktu']);
+  $isi = htmlspecialchars($data['isi']);
+  $gambarLama = ($data['gambarLama']);
+  
+  
+  if($_FILES['gambar']['error'] === 4){
+    $gambar = $gambarLama;
+  }else{
+    $gambar = upload();
+  }
+
+  $query = "UPDATE detail SET
+            gambar = '$gambar',
+            judul = '$judul',
+            waktu = '$waktu',
+            isi = '$isi',
+            id_kategori = '$kategori'
+            WHERE id =$id";
+
+  mysqli_query($conn, $query);
+  echo mysqli_error($conn);
+  return mysqli_affected_rows($conn);
+}
+function ubah($data)
+{
+  $conn = koneksi();
+  
+  $id = $data['id'];
+  
+  // cek apakah user pilih gambar baru atau tidak
+
+  $username = htmlspecialchars($data['username']);
+  $email = htmlspecialchars($data['email']);
+  $gambarLama = ($data['gambarLama']);
+  if (
+    $_FILES['gambar']['error'] === 4
+) {
+    $gambar = $gambarLama;
+} else {
+    $gambar = upload();
+}
+
+  $query = "UPDATE user SET
+            gambar = '$gambar',
+            username = '$username',
+            email = '$email',
+            WHERE id =$id";
+
+  mysqli_query($conn, $query);
+  echo mysqli_error($conn);
+  return mysqli_affected_rows($conn);
+}
+
+function edit_user($data)
+{
+  $conn = koneksi();
+  
+  $id = $data['id'];
+  
+  // cek apakah user pilih gambar baru atau tidak
+
+  $username = htmlspecialchars($data['username']);
+  $email = htmlspecialchars($data['email']);
+  $password = htmlspecialchars($data['password']);
+  
+  
+  $gambarLama = ($data['gambarLama']);
+  if($_FILES['gambar']['error'] === 4){
+    $gambar = $gambarLama;
+  }else{
+    $gambar = upload();
+  }
+
+  $query = "UPDATE user SET
+            gambar = '$gambar',
+            username = '$username',
+            email = '$email',
+            password = '$password'
+            WHERE id =$id";
+
+  mysqli_query($conn, $query);
+  echo mysqli_error($conn);
+  return mysqli_affected_rows($conn);
+}
+
+function delete_user($id){
+  $conn = koneksi();
+  mysqli_query($conn, "DELETE FROM user WHERE id= $id") or die (mysqli_error($conn));
+  return mysqli_affected_rows($conn);
+
+}
+function edit_page($data)
+{
+  $conn = koneksi();
+  
+  $id = $data['id'];
+  
+  // cek apakah user pilih gambar baru atau tidak
+
+  $judul = htmlspecialchars($data['judul']);
+  $isi = htmlspecialchars($data['isi']);
+  $isi = htmlspecialchars($data['isi']);
+  $isi2 = htmlspecialchars($data['isi2']);
+  $isi3 = htmlspecialchars($data['isi3']);
+  $isi4 = htmlspecialchars($data['isi4']);
+  $gambarLama = ($data['gambarLama']);
+  if (
+    $_FILES['gambar']['error'] === 4
+) {
+    $gambar = $gambarLama;
+} else {
+    $gambar = upload();
+}
+
+  $query = "UPDATE user SET
+            gambar = '$gambar',
+            judul = '$judul',
+            isi= '$isi',
+            isi2= '$isi2',
+            isi3= '$isi3',
+            isi4= '$isi4',
+            WHERE id =$id";
+
+  mysqli_query($conn, $query);
+  echo mysqli_error($conn);
   return mysqli_affected_rows($conn);
 }
 
